@@ -31,7 +31,7 @@ const DiamondSelector: React.FC<DiamondSelectorProps> = ({ selectedDiamond, onDi
                 src={diamond.image}
                 alt={diamond.name}
                 className="luxury-button-icon"
-                style={{ objectFit: 'contain', padding: '0px' }}
+                style={{ objectFit: 'contain', padding: '4px' }}
               />
             ) : (
               <div className="luxury-button-icon" style={{ backgroundColor: '#f0f0f0', color: '#666' }}>

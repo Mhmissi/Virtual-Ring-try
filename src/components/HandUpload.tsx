@@ -203,12 +203,11 @@ const HandUpload: React.FC<HandUploadProps> = ({ onImageUpload }) => {
                    className="camera-video"
                    style={{
                      width: '100%',
-                     maxWidth: '100%',
+                     maxWidth: '500px',
                      height: 'auto',
                      border: '2px solid #ccc',
                      borderRadius: '8px',
-                     backgroundColor: '#000',
-                     objectFit: 'cover'
+                     backgroundColor: '#000'
                    }}
                  />
                 <canvas ref={canvasRef} className="hidden" />
