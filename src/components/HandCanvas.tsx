@@ -1,7 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Hands } from "@mediapipe/hands";
-import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
-import { HAND_CONNECTIONS } from "@mediapipe/hands";
 import { getRingFingerBase } from "../utils/ringMath";
 import type { RingType, DiamondType, DiamondSize, FingerType } from "../types/ring";
 
@@ -25,7 +23,7 @@ const HandCanvas: React.FC<HandCanvasProps> = ({
   const ringImageRef = useRef<HTMLImageElement>(null);
   const diamondImageRef = useRef<HTMLImageElement>(null);
   const handsRef = useRef<Hands | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string>("");
+
   const [landmarks, setLandmarks] = useState<any[]>([]);
   const [ringImageLoaded, setRingImageLoaded] = useState(false);
   const [diamondImageLoaded, setDiamondImageLoaded] = useState(false);
@@ -141,10 +139,7 @@ const HandCanvas: React.FC<HandCanvasProps> = ({
     // Draw ring and diamond
     drawRingAndDiamondOnCanvas(ctx, ringPos, landmarks, selectedFinger);
 
-    // Update debug info
-    setDebugInfo(
-      `Ring: ${selectedRing} | Diamond: ${selectedDiamond} | Size: ${selectedDiamondSize}ct | Finger: ${selectedFinger} | Pos: (${Math.round(ringPos.x)}, ${Math.round(ringPos.y)})`
-    );
+
   };
 
   const drawRingAndDiamondOnCanvas = (
