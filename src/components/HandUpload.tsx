@@ -8,6 +8,7 @@ const HandUpload: React.FC<HandUploadProps> = ({ onImageUpload }) => {
   const [showModal, setShowModal] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraStatus, setCameraStatus] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -20,6 +21,16 @@ const HandUpload: React.FC<HandUploadProps> = ({ onImageUpload }) => {
 
   const startCamera = async () => {
     try {
+      setCameraStatus("Checking camera support...");
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not supported in this browser');
+      }
+
+      setCameraStatus("Requesting camera permissions...");
+      
+      // Request camera permissions with better error handling
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment',
@@ -27,14 +38,48 @@ const HandUpload: React.FC<HandUploadProps> = ({ onImageUpload }) => {
           height: { ideal: 720 }
         } 
       });
+      
+      setCameraStatus("Camera connected successfully!");
       setStream(mediaStream);
       setShowCamera(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    } catch (error) {
+      
+              if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.muted = true; // Required for autoplay
+          
+          // Ensure video plays
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch((error) => {
+              console.error("Error playing video:", error);
+              setCameraStatus("Error: Could not start video playback");
+            });
+          };
+          
+          // Handle video errors
+          videoRef.current.onerror = (error) => {
+            console.error("Video error:", error);
+            setCameraStatus("Error: Video stream failed");
+          };
+        }
+    } catch (error: any) {
       console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please upload an image instead.');
+      
+      let errorMessage = 'Unable to access camera. ';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage += 'Camera permission was denied. Please allow camera access and try again.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage += 'No camera found on this device.';
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage += 'Camera not supported in this browser.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage += 'Camera is already in use by another application.';
+      } else {
+        errorMessage += 'Please upload an image instead.';
+      }
+      
+      setCameraStatus(`Error: ${errorMessage}`);
+      alert(errorMessage);
     }
   };
 
@@ -84,6 +129,20 @@ const HandUpload: React.FC<HandUploadProps> = ({ onImageUpload }) => {
     };
   }, [stream]);
 
+  // Ensure video element is properly set up when camera view is shown
+  useEffect(() => {
+    if (showCamera && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.muted = true;
+      videoRef.current.onloadedmetadata = () => {
+        videoRef.current?.play().catch((error) => {
+          console.error("Error playing video:", error);
+          setCameraStatus("Error: Could not start video playback");
+        });
+      };
+    }
+  }, [showCamera, stream]);
+
   return (
     <div className="luxury-upload">
       <button 
@@ -131,17 +190,32 @@ const HandUpload: React.FC<HandUploadProps> = ({ onImageUpload }) => {
               </div>
             ) : (
               <div className="camera-view">
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline
-                  className="camera-video"
-                />
+                {cameraStatus && (
+                  <div className="camera-status">
+                    {cameraStatus}
+                  </div>
+                )}
+                                 <video 
+                   ref={videoRef} 
+                   autoPlay 
+                   playsInline
+                   muted
+                   className="camera-video"
+                   style={{
+                     width: '100%',
+                     maxWidth: '500px',
+                     height: 'auto',
+                     border: '2px solid #ccc',
+                     borderRadius: '8px',
+                     backgroundColor: '#000'
+                   }}
+                 />
                 <canvas ref={canvasRef} className="hidden" />
                 <div className="camera-controls">
                   <button 
                     className="camera-capture-button"
                     onClick={takePhoto}
+                    disabled={!stream}
                   >
                     📸 Take Photo
                   </button>
